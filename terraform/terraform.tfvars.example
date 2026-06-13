@@ -1,0 +1,20 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# terraform.tfvars is gitignored — never commit it.
+
+proxmox_host      = "192.168.4.223"
+proxmox_node      = "pm01"
+storage           = "local-lvm"
+container_id      = 200
+
+# Format: USER@REALM!TOKENID=SECRET
+# The TOKENID is the name you gave the token in Proxmox
+# (Datacenter → Permissions → API Tokens)
+proxmox_api_token = "root@pam!terraform=YOUR-TOKEN-UUID-HERE"
+
+# Generate with:
+#   ssh-keygen -t ed25519 -C "octo-scrape" -f ~/.ssh/octo_scrape_deploy
+# Then paste the contents of ~/.ssh/octo_scrape_deploy.pub here
+ssh_public_key = "ssh-ed25519 AAAA... octo-scrape"
+
+# Password for root login via Proxmox console (useful as a backup)
+root_password = "choose-a-strong-password"
