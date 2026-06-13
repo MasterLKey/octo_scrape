@@ -397,13 +397,10 @@ async def run_scrape() -> ScrapeRecord:
                 jwt_token = await _obtain_kraken_token(client)
 
             if not jwt_token:
-                record.error_message = (
-                    "Authentication failed — OCTOPUS_API_KEY invalid or not set."
+                logger.warning(
+                    "Could not obtain Kraken JWT (API key invalid or not set). "
+                    "Proceeding with session cookies only."
                 )
-                session.add(record)
-                await session.commit()
-                await session.refresh(record)
-                return record
 
             # Load session cookies from DB
             session_cookies = await _load_session_cookies()
