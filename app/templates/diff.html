@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}HTML Diff — Scrape #{{ record.id }}{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+  <a href="/" class="btn btn-ghost btn-sm">← Back</a>
+  <h1 style="margin:0;">HTML Diff — Scrape #{{ record.id }}</h1>
+  <span class="badge {% if record.page_changed %}badge-yellow{% else %}badge-gray{% endif %}">
+    {% if record.page_changed %}Changed{% else %}Unchanged{% endif %}
+  </span>
+</div>
+
+<div class="card">
+  <p style="color:var(--muted);font-size:0.875rem;margin-bottom:1rem;">
+    Comparing this scrape against the immediately preceding successful snapshot.
+    Lines shown in context only — unchanged sections are collapsed.
+  </p>
+
+  <div style="overflow-x:auto;font-size:0.78rem;line-height:1.5;">
+    <style>
+      table.diff { width:100%; border-collapse:collapse; font-family:monospace; }
+      table.diff td { padding:2px 6px; white-space:pre-wrap; word-break:break-all; vertical-align:top; }
+      .diff_header { background:#1a1d27; color:#94a3b8; font-weight:600; }
+      .diff_next { background:#22263a; color:#64748b; }
+      .diff_add { background:rgba(34,197,94,0.1); color:#86efac; }
+      .diff_chg { background:rgba(234,179,8,0.1); color:#fde68a; }
+      .diff_sub { background:rgba(239,68,68,0.1); color:#fca5a5; }
+    </style>
+    {{ diff_html | safe }}
+  </div>
+</div>
+{% endblock %}

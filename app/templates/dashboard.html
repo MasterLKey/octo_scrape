@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Octo Scrape{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+  <h1>Scrape Dashboard</h1>
+  <form method="post" action="/scrape/trigger">
+    <button type="submit" class="btn btn-primary">▶ Run Scrape Now</button>
+  </form>
+</div>
+
+{# Session status banner #}
+{% if session_status == "none" %}
+<div class="alert" style="background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.35);color:var(--yellow);margin-bottom:1.5rem;">
+  ⚠ <strong>Session cookies not configured.</strong>
+  The scraper cannot log in to Octopus Energy without them.
+  <a href="/session" style="color:var(--yellow);text-decoration:underline;margin-left:0.4rem;">Set up your session →</a>
+</div>
+{% elif session_status == "expired" %}
+<div class="alert" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:var(--red);margin-bottom:1.5rem;">
+  ✗ <strong>Session cookies have expired.</strong>
+  The last scrape was redirected to the Octopus login page.
+  <a href="/session" style="color:var(--red);text-decoration:underline;margin-left:0.4rem;">Refresh your cookies →</a>
+</div>
+{% endif %}
+
+{# Summary stats #}
+{% set accepted_count = records | selectattr("offer_accepted") | list | length %}
+{% set error_count = records | selectattr("status", "equalto", "error") | list | length %}
+{% set detected_count = records | selectattr("offer_detected") | list | length %}
+
+<div class="stat-row">
+  <div class="stat">
+    <div class="stat-value">{{ total }}</div>
+    <div class="stat-label">Total Scrapes</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="color:var(--green)">{{ detected_count }}</div>
+    <div class="stat-label">Offers Detected (this page)</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="color:var(--accent)">{{ accepted_count }}</div>
+    <div class="stat-label">Offers Accepted (this page)</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" style="color:var(--red)">{{ error_count }}</div>
+    <div class="stat-label">Errors (this page)</div>
+  </div>
+</div>
+
+<div class="card" style="padding:0; overflow:hidden;">
+  {% if records %}
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Timestamp</th>
+        <th>Status</th>
+        <th>Offer Detected</th>
+        <th>Offer Accepted</th>
+        <th>Page Changed</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in records %}
+      <tr>
+        <td style="color:var(--muted)">{{ r.id }}</td>
+        <td>{{ r.created_at.strftime("%d %b %Y %H:%M:%S") if r.created_at else "—" }}</td>
+        <td>
+          {% if r.status == "success" %}
+            <span class="badge badge-green">✓ Success</span>
+          {% elif r.status == "session_expired" %}
+            <span class="badge badge-red">Session Expired</span>
+          {% elif r.status == "no_session" %}
+            <span class="badge badge-yellow">No Session</span>
+          {% else %}
+            <span class="badge badge-red">✗ Error</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.offer_detected %}
+            <span class="badge badge-green">Yes</span>
+          {% else %}
+            <span class="badge badge-gray">No</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.offer_accepted %}
+            <span class="badge badge-green">✓ Accepted</span>
+          {% elif r.offer_detected %}
+            <span class="badge badge-yellow">Found, not clicked</span>
+          {% else %}
+            <span class="badge badge-gray">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.page_changed %}
+            <span class="badge badge-yellow">Changed</span>
+          {% else %}
+            <span class="badge badge-gray">Same</span>
+          {% endif %}
+        </td>
+        <td style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+          {% if r.html_snapshot %}
+            <a href="/scrape/{{ r.id }}/snapshot" target="_blank" class="btn btn-ghost btn-sm">HTML</a>
+            <a href="/scrape/{{ r.id }}/diff" class="btn btn-ghost btn-sm">Diff</a>
+          {% else %}
+            <span style="color:var(--muted);font-size:0.8rem;">No snapshot</span>
+          {% endif %}
+          {% if r.error_message %}
+            <span title="{{ r.error_message }}" style="cursor:help;color:var(--red);font-size:0.8rem;">⚠ Error</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="pagination" style="padding:1rem;">
+    {% if page > 1 %}
+      <a href="/?page={{ page - 1 }}">← Prev</a>
+    {% endif %}
+
+    {% for p in range(1, total_pages + 1) %}
+      {% if p == page %}
+        <span class="current">{{ p }}</span>
+      {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+        <a href="/?page={{ p }}">{{ p }}</a>
+      {% elif p == page - 3 or p == page + 3 %}
+        <span>…</span>
+      {% endif %}
+    {% endfor %}
+
+    {% if page < total_pages %}
+      <a href="/?page={{ page + 1 }}">Next →</a>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div style="padding:3rem; text-align:center; color:var(--muted);">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔍</div>
+    <p>No scrapes recorded yet.</p>
+    <p style="margin-top:0.5rem;font-size:0.85rem;">Use the "Run Scrape Now" button or configure a schedule.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

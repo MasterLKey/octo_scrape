@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Session — Octo Scrape{% endblock %}
+
+{% block content %}
+<h1>Octopus Session</h1>
+
+{% if saved %}
+<div class="alert alert-success">✓ Session cookies saved. The scraper will use them on the next run.</div>
+{% endif %}
+{% if cleared %}
+<div class="alert" style="background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.3);color:var(--yellow);">
+  Session cookies cleared.
+</div>
+{% endif %}
+{% if error %}
+<div class="alert" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:var(--red);">
+  ✗ Invalid cookie data: {{ error }}
+</div>
+{% endif %}
+
+<!-- Status card -->
+<div class="card" style="border-color:{% if summary.status == 'ok' %}rgba(34,197,94,0.4){% elif summary.status == 'none' %}rgba(234,179,8,0.4){% else %}rgba(239,68,68,0.4){% endif %}">
+  <h2>Cookie Status</h2>
+  <div style="display:flex;align-items:center;gap:1rem;margin-top:0.5rem;">
+    {% if summary.status == 'ok' %}
+      <span class="badge badge-green">● Active</span>
+      <span style="color:var(--muted);font-size:0.875rem;">{{ summary.count }} cookies stored</span>
+    {% elif summary.status == 'none' %}
+      <span class="badge badge-yellow">○ Not configured</span>
+      <span style="color:var(--muted);font-size:0.875rem;">Follow the steps below to add your session cookies.</span>
+    {% else %}
+      <span class="badge badge-red">✗ Invalid</span>
+      <span style="color:var(--muted);font-size:0.875rem;">Cookie data is malformed — please re-export and re-paste.</span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- How-to card -->
+<div class="card">
+  <h2>How to export your session cookies</h2>
+  <p style="color:var(--muted);font-size:0.875rem;margin-bottom:1rem;">
+    The Octopus Energy dashboard uses a login system that requires a real browser session.
+    Export your cookies once and paste them below — they usually last several weeks.
+    You only need to repeat this when the scraper reports that your session has expired.
+  </p>
+
+  <ol style="color:var(--text);font-size:0.875rem;line-height:2;padding-left:1.25rem;">
+    <li>
+      Install the <strong>Cookie Editor</strong> browser extension:
+      <a href="https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm"
+         target="_blank" style="color:var(--accent);">Chrome</a>
+      &nbsp;/&nbsp;
+      <a href="https://addons.mozilla.org/en-GB/firefox/addon/cookie-editor/"
+         target="_blank" style="color:var(--accent);">Firefox</a>
+    </li>
+    <li>
+      Open <a href="https://octopus.energy" target="_blank" style="color:var(--accent);">octopus.energy</a>
+      in your browser and <strong>sign in</strong> to your account.
+    </li>
+    <li>Click the Cookie Editor icon in your toolbar.</li>
+    <li>Click <strong>Export → Export as JSON</strong> (the cloud ↑ icon).</li>
+    <li>The JSON is now in your clipboard — paste it into the field below.</li>
+    <li>Click <strong>Save Cookies</strong>.</li>
+  </ol>
+
+  <div style="margin-top:1rem;padding:0.75rem;background:var(--surface2);border-radius:7px;border:1px solid var(--border);">
+    <p style="font-size:0.8rem;color:var(--muted);">
+      <strong style="color:var(--yellow);">Tip:</strong>
+      Make sure you export cookies for the <code>octopus.energy</code> domain
+      (not <code>auth.octopus.energy</code>). Cookie Editor should show these automatically
+      when you're on the octopus.energy page.
+    </p>
+  </div>
+</div>
+
+<!-- Paste form -->
+<div class="card">
+  <h2>Paste Cookie JSON</h2>
+  <form method="post" action="/session">
+    <div class="form-group">
+      <label for="cookies_json">Cookie JSON (from Cookie Editor → Export)</label>
+      <textarea
+        id="cookies_json"
+        name="cookies_json"
+        rows="10"
+        placeholder='[{"name":"session","value":"abc123","domain":".octopus.energy","path":"/", ...}, ...]'
+        required
+        style="
+          width:100%;
+          background:var(--bg);
+          border:1px solid var(--border);
+          border-radius:7px;
+          padding:0.75rem;
+          color:var(--text);
+          font-family:monospace;
+          font-size:0.8rem;
+          resize:vertical;
+          transition:border-color 0.15s;
+        "
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--border)'"
+      ></textarea>
+    </div>
+    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+      <button type="submit" class="btn btn-primary">Save Cookies</button>
+      {% if summary.status == 'ok' %}
+      <span style="font-size:0.8rem;color:var(--muted);">
+        Saving new cookies will replace the {{ summary.count }} currently stored.
+      </span>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+{% if summary.status == 'ok' %}
+<!-- Clear section -->
+<div class="card" style="border-color:rgba(239,68,68,0.2);">
+  <h2>Clear Session</h2>
+  <p style="color:var(--muted);font-size:0.875rem;margin-bottom:1rem;">
+    Remove stored cookies. The scraper will stop working until you add new ones.
+  </p>
+  <form method="post" action="/session/clear"
+        onsubmit="return confirm('Clear all stored session cookies?')">
+    <button type="submit" class="btn btn-ghost"
+            style="border-color:rgba(239,68,68,0.4);color:var(--red);">
+      Clear Cookies
+    </button>
+  </form>
+</div>
+{% endif %}
+
+{% endblock %}

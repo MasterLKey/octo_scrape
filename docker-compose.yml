@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      # Secrets injected from host environment (via Infisical or shell export)
+      OCTOPUS_EMAIL: ${OCTOPUS_EMAIL}
+      OCTOPUS_PASSWORD: ${OCTOPUS_PASSWORD}
+      OCTOPUS_API_KEY: ${OCTOPUS_API_KEY}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY}
+
+volumes:
+  postgres_data:

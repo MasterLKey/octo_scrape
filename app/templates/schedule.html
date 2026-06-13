@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Schedule — Octo Scrape{% endblock %}
+
+{% block content %}
+<h1>Scrape Schedule</h1>
+
+{% if request.query_params.get("saved") %}
+<div class="alert alert-success">✓ Schedule saved and applied successfully.</div>
+{% endif %}
+
+<div class="card">
+  <h2>Configuration</h2>
+  <p style="color:var(--muted);font-size:0.875rem;margin-bottom:1.5rem;">
+    The scraper will run every <strong>N minutes</strong> but only fire if the current
+    time falls within the configured daily window. Changes take effect immediately.
+  </p>
+
+  <form method="post" action="/schedule">
+    <div class="form-group">
+      <label for="interval_minutes">Scrape interval (minutes)</label>
+      <input
+        type="number"
+        id="interval_minutes"
+        name="interval_minutes"
+        min="1"
+        max="1440"
+        value="{{ config.interval_minutes }}"
+        style="max-width:200px;"
+        required
+      />
+      <p style="color:var(--muted);font-size:0.8rem;margin-top:0.3rem;">
+        Minimum 1 minute. Recommended: 30–60 minutes.
+      </p>
+    </div>
+
+    <div class="grid-2" style="max-width:420px;">
+      <div class="form-group">
+        <label for="window_start">Window start</label>
+        <input
+          type="time"
+          id="window_start"
+          name="window_start"
+          value="{{ window_start }}"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="window_end">Window end</label>
+        <input
+          type="time"
+          id="window_end"
+          name="window_end"
+          value="{{ window_end }}"
+          required
+        />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Scheduler enabled</label>
+      <div class="toggle-wrap">
+        <label class="toggle">
+          <input type="checkbox" name="enabled" value="on" {% if config.enabled %}checked{% endif %} />
+          <span class="toggle-slider"></span>
+        </label>
+        <span style="font-size:0.875rem;color:var(--muted);">
+          {% if config.enabled %}Running{% else %}Paused{% endif %}
+        </span>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Save Schedule</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Current Status</h2>
+  <table style="max-width:500px;">
+    <tbody>
+      <tr>
+        <td style="color:var(--muted);padding:0.5rem 1rem 0.5rem 0;">Status</td>
+        <td>
+          {% if config.enabled %}
+            <span class="badge badge-green">● Active</span>
+          {% else %}
+            <span class="badge badge-gray">○ Paused</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);padding:0.5rem 1rem 0.5rem 0;">Interval</td>
+        <td>Every {{ config.interval_minutes }} minute{{ "s" if config.interval_minutes != 1 }}</td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);padding:0.5rem 1rem 0.5rem 0;">Daily window</td>
+        <td>{{ window_start }} – {{ window_end }}</td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted);padding:0.5rem 1rem 0.5rem 0;">Target URL</td>
+        <td style="word-break:break-all;font-size:0.8rem;">{{ config_url }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}
