@@ -9,7 +9,7 @@
 # =============================================================================
 set -euo pipefail
 
-REPO_URL="https://github.com/jelbies/octo_scrape.git"   # updated by CI
+REPO_URL="https://github.com/MasterLKey/octo_scrape.git"
 APP_DIR="/opt/octo_scrape"
 SERVICE_FILE="/etc/systemd/system/octo-scrape.service"
 ENV_FILE="/etc/octo-scrape.env"
