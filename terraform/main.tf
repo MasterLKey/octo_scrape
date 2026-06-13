@@ -18,6 +18,16 @@ provider "proxmox" {
   insecure  = true   # set to false if you have a valid TLS cert on Proxmox
 }
 
+# ── Ubuntu 24.04 LXC template ────────────────────────────────────────────────
+# Downloads the template from the official Proxmox mirror if not already present.
+resource "proxmox_virtual_environment_download_file" "ubuntu_2404" {
+  node_name    = var.proxmox_node
+  content_type = "vztmpl"
+  datastore_id = "local"
+  url          = "http://download.proxmox.com/images/system/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
+  overwrite    = false   # skip download if template already exists
+}
+
 # ── LXC Container ────────────────────────────────────────────────────────────
 resource "proxmox_virtual_environment_container" "octo_scrape" {
   node_name   = var.proxmox_node
@@ -27,15 +37,14 @@ resource "proxmox_virtual_environment_container" "octo_scrape" {
 
   start_on_boot = true
   started       = true
+  unprivileged  = true   # required to set nesting via API token
 
-  # Ubuntu 24.04 LXC template
-  # Run on Proxmox host first:
-  #   pveam update
-  #   pveam download local ubuntu-24.04-standard_24.04-2_amd64.tar.zst
   operating_system {
-    template_file_id = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
+    template_file_id = proxmox_virtual_environment_download_file.ubuntu_2404.id
     type             = "ubuntu"
   }
+
+  depends_on = [proxmox_virtual_environment_download_file.ubuntu_2404]
 
   cpu {
     cores = 2
